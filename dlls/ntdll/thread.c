@@ -214,12 +214,6 @@ BYTE* CDECL __wine_user_shared_data(void)
 {
     LARGE_INTEGER now;
     NtQuerySystemTime( &now );
-    user_shared_data->SystemTime.LowPart = now.u.LowPart;
-    user_shared_data->SystemTime.High1Time = user_shared_data->SystemTime.High2Time = now.u.HighPart;
-    user_shared_data->u.TickCountQuad = (now.QuadPart - server_start_time) / 10000;
-    user_shared_data->u.TickCount.High2Time = user_shared_data->u.TickCount.High1Time;
-    user_shared_data->TickCountLowDeprecated = user_shared_data->u.TickCount.LowPart;
-    user_shared_data->TickCountMultiplier = 1 << 24;
     return (BYTE *)user_shared_data;
 }
 
