@@ -89,6 +89,7 @@ static const BOOL is_win64 = (sizeof(void *) > sizeof(int));
 
 HMODULE kernel32_handle = 0;
 SYSTEM_BASIC_INFORMATION system_info = { 0 };
+LPTHREAD_START_ROUTINE entry_proc = NULL;
 
 const WCHAR *DIR_Windows = NULL;
 const WCHAR *DIR_System = NULL;
@@ -1103,15 +1104,9 @@ static inline DWORD call_process_entry( PEB *peb, LPTHREAD_START_ROUTINE entry )
  */
 static DWORD WINAPI start_process( PEB *peb )
 {
-    IMAGE_NT_HEADERS *nt;
-    LPTHREAD_START_ROUTINE entry;
     BOOL being_debugged;
 
-    nt = RtlImageNtHeader( peb->ImageBaseAddress );
-    entry = (LPTHREAD_START_ROUTINE)((char *)peb->ImageBaseAddress +
-                                     nt->OptionalHeader.AddressOfEntryPoint);
-
-    if (!nt->OptionalHeader.AddressOfEntryPoint)
+    if (entry_proc == (LPTHREAD_START_ROUTINE)peb->ImageBaseAddress)
     {
         ERR( "%s doesn't have an entry point, it cannot be executed\n",
              debugstr_w(peb->ProcessParameters->ImagePathName.Buffer) );
@@ -1120,7 +1115,7 @@ static DWORD WINAPI start_process( PEB *peb )
 
     if (TRACE_ON(relay))
         DPRINTF( "%04x:Starting process %s (entryproc=%p)\n", GetCurrentThreadId(),
-                 debugstr_w(peb->ProcessParameters->ImagePathName.Buffer), entry );
+                 debugstr_w(peb->ProcessParameters->ImagePathName.Buffer), entry_proc );
 
     if (CreateEventA(0, 0, 0, "__winestaging_warn_event") && GetLastError() != ERROR_ALREADY_EXISTS)
     {
@@ -1135,7 +1130,7 @@ static DWORD WINAPI start_process( PEB *peb )
 
     SetLastError( 0 );  /* clear error code */
     if (being_debugged) DbgBreakPoint();
-    return call_process_entry( peb, entry );
+    return call_process_entry( peb, entry_proc );
 }
 
 
@@ -1216,6 +1211,7 @@ void CDECL __wine_kernel_init(void)
     RTL_USER_PROCESS_PARAMETERS *params = peb->ProcessParameters;
     HANDLE boot_events[2];
     BOOL got_environment = TRUE;
+    IMAGE_NT_HEADERS *nt;
 
     /* Initialize everything */
 
@@ -1328,6 +1324,10 @@ void CDECL __wine_kernel_init(void)
     }
 
     if (!params->CurrentDirectory.Handle) chdir("/"); /* avoid locking removable devices */
+
+    nt = RtlImageNtHeader( peb->ImageBaseAddress );
+    entry_proc = (LPTHREAD_START_ROUTINE)((char *)peb->ImageBaseAddress +
+                                          nt->OptionalHeader.AddressOfEntryPoint);
 
     LdrInitializeThunk( start_process, 0, 0, 0 );
 
