@@ -657,7 +657,10 @@ NTSTATUS WINAPI NtSuspendThread( HANDLE handle, PULONG count )
     SERVER_START_REQ( suspend_thread )
     {
         req->handle = wine_server_obj_handle( handle );
-        if (!(ret = wine_server_call( req ))) *count = reply->count;
+        if (!(ret = wine_server_call( req )))
+        {
+            if (count) *count = reply->count;
+        }
     }
     SERVER_END_REQ;
     return ret;
@@ -675,7 +678,10 @@ NTSTATUS WINAPI NtResumeThread( HANDLE handle, PULONG count )
     SERVER_START_REQ( resume_thread )
     {
         req->handle = wine_server_obj_handle( handle );
-        if (!(ret = wine_server_call( req ))) *count = reply->count;
+        if (!(ret = wine_server_call( req )))
+        {
+            if (count) *count = reply->count;
+        }
     }
     SERVER_END_REQ;
     return ret;
