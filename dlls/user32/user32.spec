@@ -343,6 +343,7 @@
 # @ stub GetNextQueueWindow
 @ stdcall GetOpenClipboardWindow()
 @ stdcall GetParent(long)
+@ stdcall GetPhysicalCursorPos(ptr)
 @ stdcall GetPriorityClipboardFormat(ptr long)
 @ stdcall GetProcessDefaultLayout(ptr)
 @ stdcall GetProcessWindowStation()
@@ -657,6 +658,7 @@
 @ stdcall SetMessageExtraInfo(long)
 @ stdcall SetMessageQueue(long)
 @ stdcall SetParent(long long)
+@ stdcall SetPhysicalCursorPos(long long)
 @ stdcall SetProcessDefaultLayout(long)
 @ stdcall SetProcessDPIAware()
 @ stdcall SetProcessWindowStation(long)
